@@ -11,7 +11,7 @@ theme = "hugo-sustain"
   post = "/:year/:month/:day/:slug"
 
 [params]
-  avatar = "IMG_7280 2.JPG"
+  avatar = "profilepic.png"
   author = "Nandini Singh"
   description = "Describe your website"
 
@@ -25,7 +25,6 @@ theme = "hugo-sustain"
   LinkedIn      = "https://www.linkedin.com/in/nandini-singh-42aab21a4/"
   Instagram     = "https://www.instagram.com/nandini_singh1/"
   
-
 ## Main Menu
 [[menu.main]]
   name = "blog"
@@ -37,8 +36,3 @@ theme = "hugo-sustain"
   identifier = "projects"
   weight = 200
   url = "/projects/"
-[[menu.main]]
-  name = "resume"
-  identifier = "resume"
-  weight = 300
-  url = "/resume/"
