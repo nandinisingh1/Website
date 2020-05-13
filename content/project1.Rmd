@@ -1,0 +1,144 @@
+---
+title: "Project 1"
+author: "Nandini Singh"
+date: "3/15/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(tibble)
+library(readr)
+```
+
+```{r}
+#Data sets
+#Data set #1: Nutritional and Marketing Information on US Cereals
+UScereal<-read.csv("UScereal.csv")
+glimpse(UScereal)
+#Data set #2: 2011 Advertising Spending for Cereal Brands
+adv_spending<-read.csv("adv_spending.csv")
+glimpse(adv_spending)
+```
+#Introduction
+For this project, I obtained my first dataset from the website https://vincentarelbundock.github.io/Rdatasets/datasets.html. It contains 12 variables, including brand, manufacturer represented by its first initial: G=General Mills, K=Kelloggs, N=Nabisco, P=Post, Q=Quaker Oats, R=Ralston Purina, calories, fat (g), protein (g), sodium (mg), fiber (g), carbohydrates (g), sugar (g), potassium (g), all in one portion, vitamins (none, enriched, or 100%), and shelf (1, 2, or 3, counting from the floor).
+My second dataset came from http://www.cerealfacts.org/media/Marketing_Rankings/Advertising_Spending.pdf. I had to input the data on an excel sheet and save it as a csv file. It only has 2 variables: brand and advertising spending for 2011 in millions of dollars. I chose these datasets to analyze and compare because I am applying to graduate school for marketing, and I am interested in finding out if there is a correlation between the overall nutrition of a certain cereal and the amount spent on its advertising.
+
+```{R}
+#Tidying / Joining
+library(tidyverse)
+joined_data<-full_join(UScereal, adv_spending)
+head(joined_data)
+joined_wide<-joined_data%>%pivot_wider(names_from = "mfr", values_from = "calories") %>%glimpse()
+joined_long <- joined_wide %>%
+  pivot_longer(c("N","K","G","P","Q","R"),names_to = "mfr",values_to = "calories", values_drop_na=T ) %>% glimpse()
+
+```
+#Tidying, Joining
+My datasets were already tidy, so I pivoted wider by making manufacturer columns with their corresponding calories per portion and then proceeded to pivot longer to condense the these columns into one column called “mfr”, which made my data much easier to read. I included values_drop_na=T when I pivoted longer in order demonstrate that I can omit the NAs, but there were not any to begin with. I did a full join with the common variable "brand", as I wanted to keep all the variables in both datasets.
+
+```{r}
+#Wrangling
+
+#selecting only to variables to display
+joined_data %>% select(vitamins, sugars)
+
+#shows the mean calories for cereals in each shelf
+joined_data %>% group_by(shelf) %>% summarize(mean_cal=mean(calories))
+
+#returns cereals in descending advertising spending for caloric values 300-400
+joined_data%>%filter(between(calories,300,400))%>%arrange(desc(spending))
+
+#converted sodium per portion from milligrams to grams and created a new variable
+joined_data%>%mutate(sodium_g=(sodium*1000))
+
+#counting the number of unique values in each variable
+joined_data %>% summarize_all(n_distinct)
+
+#shows the mean, sd, and var of calories for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_cal=mean(calories), sd_cal=sd(calories),var_cal=var(calories))
+
+#shows the mean, sd, and var of fat per portion for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_fat=mean(fat), sd_fat=sd(fat),var_fat=var(fat))
+
+#shows the mean, sd, and var of sodium per portion for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_sod=mean(sodium), sd_sod=sd(sodium),var_sod=var(sodium))
+
+#shows the mean, sd, and var of fibre per portion for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_fib=mean(fibre), sd_fib=sd(fibre),var_fib=var(fibre))
+
+#shows the mean, sd, and var of carbohydrates per portion for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_carb=mean(carbo), sd_carb=sd(carbo),var_carb=var(carbo))
+
+#shows the mean, sd, and var of sugars per portion for Kelloggs when advertising spending is greater that $10 million for the cereal
+joined_data%>%filter(`mfr`=="K",'spending'>10)%>%summarize(mean_sug=mean(sugars), sd_sug=sd(sugars),var_sug=var(sugars))
+
+#shows the mean, sd, and var of potassium per portion for Kelloggs 
+joined_data%>%filter(`mfr`=="K")%>%summarize(mean_pot=mean(potassium), sd_pot=sd(potassium),var_pot=var(potassium))
+
+#shows all summary statistics for protein per portion
+joined_data %>% summarize(mean_prot=mean(protein), var_prot=var(protein), max_prot=max(protein), min_prot=min(protein), n_dist_prot=n_distinct(protein), cor_prot=cor(shelf, protein), median_prot=median(protein), mad_prot=mad(protein))
+
+cor(joined_data$fat, joined_data$sugars)
+ 
+plot(joined_data$fat, joined_data$sugars)
+
+```
+I have quite a few numeric variables, so I only summarized a few of them while selecting for other variables. I computed all the dplyr functions as well as all the summary statistics. Additionally, I created a correlation matrix for sugar and fat per cereal portion, which appears to have no significant correlation, which I expected.
+```{r}
+#Visualization
+
+#Correlation heatmap
+library(ggplot2)
+joined_data %>% select_if(is.numeric) %>% cor %>% as.data.frame %>% rownames_to_column %>% pivot_longer(-1) %>% ggplot(aes(rowname, name, fill=value)) + geom_tile() + geom_text(aes(label=round(value, 2))) + xlab("") + ylab("") + scale_fill_gradient2(low="red", high="blue") +ggtitle("Correlation Heatmap of Numeric Variables")
+
+ggplot(data = joined_data, aes(x = mfr, y = calories, color = `fat`)) + 
+  geom_point(size = 3) 
+#this graph shows that as fat content gets higher, so does the amount of calories per portion
+
+ggplot(joined_data, aes(x=`protein`,y = 'fibre', fill=`spending`)) + theme(legend.position=c(.9,.7)) + geom_density(alpha=.75)+geom_bar(stat="summary",fun.y="mean")+
+geom_errorbar(stat="summary", width=.5) 
+#this plot shows absolutely no relation between protein and advertising spending, which I did not expect because I feel like cereal companies would want to advertise the higher protein levels per serving in their product
+
+ggplot(joined_data, aes(x=shelf, fill=`spending`)) + geom_bar()
+#this shows that companies are spending a lot more to have their cereals displayed higher up form the ground
+
+```
+
+```{r}
+#Clustering
+
+install.packages('cluster')
+library(cluster)
+library(tidyverse)
+joined_data<-na.omit(joined_data)
+
+pam_data<-joined_data%>%select(-spending, -vitamins, -shelf, -mfr, -brand)%>%pam(3)
+
+sil_width<-vector() 
+for(i in 2:10){
+pam_fit <- joined_data%>%select(-spending, -vitamins, -shelf, -mfr, -brand)%>%pam(i)
+sil_width[i] <- pam_fit$silinfo$avg.width }
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+
+clust <-joined_data%>%mutate(cluster=as.factor(pam_fit$clustering))
+cmatrix<-clust%>%group_by(spending, vitamins, shelf, mfr, brand)%>%count(cluster)%>%arrange(desc(n))%>%
+pivot_wider(names_from="cluster",values_from="n",values_fill = list('n'=0))
+cmatrix
+
+ggplot(clust, aes(x=fat,y=calories, color=cluster))+ ggtitle("Fat vs. Calories")+geom_point()
+
+plot(pam_fit,which=2)
+
+library(GGally)
+ggpairs(clust, columns=5:12, aes(color=cluster))
+```
+My average silhouette width was about 0.35 according to my silhouette plot, making it weak and ppossibly artificial. There is a direct correlation between fat and calories, which makes sense. Also, there was not much correlation between the categorical variables (spending, manufacturer, vitamins). Lastly, I can assume that brands with the most sugary cereals would spend more on advertising than those with less sugary cereals, which I would have predicted assuming sugary cereals are more popular among children.
+```{R}

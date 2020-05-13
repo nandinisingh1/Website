@@ -1,0 +1,141 @@
+---
+title: "Project 2"
+author: "Nandini Singh"
+date: "5/1/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(tibble)
+library(readr)
+```
+
+```{r}
+#Data set: Nutritional and Marketing Information on US Cereals
+UScereal <- read_csv("UScereal.csv")
+glimpse(UScereal)
+```
+#Introduction
+For this project, I chose to expand on the UScereal data from Project 1, which I obtained from the website https://vincentarelbundock.github.io/Rdatasets/datasets.html. It contains 65 observations of 12 variables, which are brand, manufacturer represented by its first initial (G=General Mills, K=Kelloggs, N=Nabisco, P=Post, Q=Quaker Oats, R=Ralston Purina), calories, fat (g), protein (g), sodium (mg), fiber (g), carbohydrates (g), sugars (g), potassium (g), all in one portion, vitamins (none, enriched, or 100%), and shelf (1, 2, or 3, counting from the floor up).
+
+1. MANOVA Testing
+```{R}
+manova1 <- manova(cbind(calories, fat, sugars) ~ mfr, data = UScereal)
+summary(manova1)
+1-(0.95^4) #Probability of at least one type I error
+0.05/4 #Bonferroni correction
+```
+A one-way multivariate analysis of variance (MANOVA) was conducted to test the effect of manufacturer on three dependent, numeric variables: the calories, fat, and sugar in one portion. Significant differences were not found across levels of manufacturer for the numeric variables, as the p-value > 0.05. Because there are no mean differences, univariate ANOVAs and post-hoc t tests are not required. I have only performed one test. The probability of a type I error is 18.55%, and the value of bonferroni correction is 0.0125.
+The assumptions of a MANOVA test are multivariate normality of dependent variables, independent sample and random observations, homogeneity of covariance matrices, linear relationships between dependent variables, no extreme univariate or multivariate outliers, and no multicollinearity. These assumptions have to be met for a successful MANOVA, which we were able to perform.
+
+2. Randomization Test
+```{r}
+UScereal <- UScereal %>% mutate(y = ifelse(vitamins == "none", 1, 0))
+t.test(data=UScereal,fibre~y)
+t.test(data=UScereal,potassium~y)
+t<-vector()
+for(i in 1:10000){
+  samp<-rnorm(25,mean=5)
+  t[i] <- (mean(samp)-5)/(sd(samp)/sqrt(25))
+}
+data.frame(t)%>% ggplot(aes(t))+geom_histogram(aes(y=..density..), bins=30)+ stat_function(fun=dt,args=list(df=24),geom="line")
+```
+Because the vitamins variable was divided into the factors none, enriched, and 100%, I decided to make a new binary variable "y" by making "none" = 1, and "enriched" and "100%" = 0. I performed a Welch two sample t-test to see whether the average cereal fibre and potassium had significant mean differences when the cereal was enriched vs. when it was not. The null hypothesis is that there is no significant difference in the means between fibre and potassium when the cereal is enriched with vitamins vs. when it is not. The alternate hypothesis is that there is a significant difference in the means between fibre and potassium when the cereal is enriched vs. when it is not. The first t-test explored the interaction of fibre with vitamin enrichment and had a p-value of 0.8495. Therefore, we reject the null hypothesis and there was no significant difference in fibre of the cereal with vitamin enrichment. The second t-test explored the interaction of potassium in one serving of the cereal with vitamin enrichment and had a p-value of 0.7182, meaning we reject the null hypothesis and that were was no significant mean difference between the interaction of potassium in the cereal with vitamin enrichment. A plot visualizing the null distribution and the test statistic can be seen above.
+
+3. Linear Regression Model
+```{r}
+UScereal$carbo_c <- UScereal$carbo-mean(UScereal$carbo)
+UScereal$sugars_c <- UScereal$sugars-mean(UScereal$sugars)
+fit3<-lm(carbo_c ~ sugars_c*y, data=UScereal)
+summary(fit3)
+#Regression plot
+ggplot(UScereal, aes(x=sugars, y=carbo,group=y))+geom_point(aes(color=y))+
+geom_smooth(method="lm",formula=y~1,se=F,fullrange=T,aes(color=y))+
+xlab("Sugars per serving (g)") + ylab("Carbohydrates per serving (g)")
+#Assumptions (linearity, homoskedsaticity)
+resids<-fit3$residuals
+fitvals<-fit3$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='orange')
+library(lmtest)
+bptest(fit3) #Breuch-Pagan test (null hypothesis: homoskedasticity)
+#The p-value > 0.05, so the null hypothesis can't be rejected and we confirm that heteroskedasticity is not the case in the model. It is homoskedastic.
+#Assumptions (normality)
+ggplot()+geom_histogram(aes(resids), bins=20)
+#Based off the histogram of residuals, normality is not met. The data is left-skewed.
+#Robust standard errors
+summary(fit3)$coef[,1:2] #uncorrected SEs
+library(sandwich)
+coeftest(fit3, vcov=vcovHC(fit3))[,1:2] #corrected SEs
+#The standard errors are lower in the corrected output, but the intercept and coefficient estimates remain the same.
+#Variation
+summary(fit3)$r.sq
+#The proportion of the variation in the outcome explained by the model is 0.97%.
+fit3rerun <- lm(carbo ~ y+sugars, data=UScereal) #Regression without interactions
+lrtest(fit3rerun, fit3) #Likelihood ratio test
+```
+The intercept explains the carbohydrate value when the value of sugars and y is 0. sugars_c explains that if you hold y constant, every 1 point increase in sugars would decrease the carbohydrates by 0.005362. y explains that if you hold sugars constant, the absence of vitamins will increase the carbohydrates by 3.894554 compared to enriched cereal. The interaction explains whether the effect of presence of sugars on carbohydrates differs by vitamin enrichment. Out of the linearity, heteroskedsaticity, and normality assumptions, not all are met. Looking at the graph, we can see that the linearity assumption is met due to linear relationship between predictor and response variables. Heteroskedasticity is not met because the points do not fan out. We can confirm this with the Breusch-Pagan test where we see that the p-value > 0.05. Based off of the histogram of residuals, normality is not met. When the regression was recomputed with robust standard errors via coeftest, the standard errors were slightly lower than in the uncorrected output run previously. 0.97% of the variation in the outcome is explained by the model.
+
+4. Linear Regression Model with Bootstrapped Standard Errors
+```{r}
+fit3<-lm(carbo_c ~ sugars_c*y, data=UScereal)
+samp_distn <- replicate(5000, {
+  boot_dat <- UScereal[sample(nrow(UScereal), replace=TRUE),]
+  fit4 <- lm(carbo_c ~ sugars_c*y, data=boot_dat)
+  coef(fit4)
+})
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+The bootstrapped standard errors for the intercept and sugars are 0.001308052 and 0.0005891642, respectively. Vitamin enrichment and the interaction between the two are N/A. All of these bootstrapped errors are slightly less than the corrected robust standard errors and much less than the uncorrected standard errors.
+
+5. Logistic Regression Predicting Binary Categorical Variable
+```{R}
+class_diag<-function(probs,truth){
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth))
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+  data.frame(acc,sens,spec,ppv,auc)
+} 
+#Regression and coefficient estimates
+logreg <- glm(y ~ protein + sodium, data = UScereal, family = "binomial")
+coeftest(logreg)
+exp(coef(logreg))
+#Regression and predicted probability
+logreg <- glm(y ~ protein + sodium, data = UScereal, family = "binomial")
+probs <- predict(logreg, type = "response")
+#Class diagnostics - accuracy, sensitivity, specificity, and recall (ppv)
+class_diag(probs, UScereal$y) #class diagnostics
+#Confusion matrix
+table(predict = probs > 0.5, truth = UScereal$y) %>% addmargins()
+#Density of log-odds (logit)
+UScereal$logit<-predict(logreg) 
+UScereal$y<-factor(UScereal$y,levels=c(1,0),labels=c("not vitamin enriched", "vitamin enriched"))
+ggplot(UScereal,aes(logit, fill=y))+geom_density(alpha=.3)+
+  geom_vline(xintercept=0,lty=2)
+#ROCcurve
+library(plotROC)
+ROCcurve<-ggplot(UScereal)+geom_roc(aes(d=y,m=probs), n.cuts=0) +
+  geom_segment(aes(x=0,xend=1,y=0,yend=1),lty=2)
+ROCcurve
+calc_auc(ROCcurve)
+```
+The coefficient estimates show the effect of the different variables on the odds for vitamin enrichment. For every one point increase in protein the odds of vitamin enrichment decrease by 0.37059. For every one point increase in sodium, the odds of vitamin enrichment decrease by 0.38223. The area under the curve of the ROC curve was calculated to be 0.0215, which indicates a poor model because the closer the AUC is to 1, the better.

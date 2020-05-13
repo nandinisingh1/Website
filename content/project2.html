@@ -1,0 +1,248 @@
+---
+title: "Project 2"
+author: "Nandini Singh"
+date: "5/1/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<pre class="r"><code># Data set: Nutritional and Marketing Information on US
+# Cereals
+UScereal &lt;- read_csv(&quot;UScereal.csv&quot;)
+glimpse(UScereal)</code></pre>
+<pre><code>## Observations: 65
+## Variables: 12
+## $ brand     &lt;chr&gt; &quot;100% Bran&quot;, &quot;All-Bran&quot;, &quot;All-Bran with Extra Fiber&quot;, &quot;Appl…
+## $ mfr       &lt;chr&gt; &quot;N&quot;, &quot;K&quot;, &quot;K&quot;, &quot;G&quot;, &quot;K&quot;, &quot;G&quot;, &quot;R&quot;, &quot;P&quot;, &quot;Q&quot;, &quot;G&quot;, &quot;G&quot;, &quot;G&quot;,…
+## $ calories  &lt;dbl&gt; 212.1212, 212.1212, 100.0000, 146.6667, 110.0000, 173.3333,…
+## $ protein   &lt;dbl&gt; 12.121212, 12.121212, 8.000000, 2.666667, 2.000000, 4.00000…
+## $ fat       &lt;dbl&gt; 3.030303, 3.030303, 0.000000, 2.666667, 0.000000, 2.666667,…
+## $ sodium    &lt;dbl&gt; 393.9394, 787.8788, 280.0000, 240.0000, 125.0000, 280.0000,…
+## $ fibre     &lt;dbl&gt; 30.303030, 27.272727, 28.000000, 2.000000, 1.000000, 2.6666…
+## $ carbo     &lt;dbl&gt; 15.15152, 21.21212, 16.00000, 14.00000, 11.00000, 24.00000,…
+## $ sugars    &lt;dbl&gt; 18.181818, 15.151515, 0.000000, 13.333333, 14.000000, 10.66…
+## $ shelf     &lt;dbl&gt; 3, 3, 3, 1, 2, 3, 1, 3, 2, 1, 2, 3, 2, 1, 1, 2, 2, 3, 3, 3,…
+## $ potassium &lt;dbl&gt; 848.48485, 969.69697, 660.00000, 93.33333, 30.00000, 133.33…
+## $ vitamins  &lt;chr&gt; &quot;enriched&quot;, &quot;enriched&quot;, &quot;enriched&quot;, &quot;enriched&quot;, &quot;enriched&quot;,…</code></pre>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>For this project, I chose to expand on the UScereal data from Project 1, which I obtained from the website <a href="https://vincentarelbundock.github.io/Rdatasets/datasets.html" class="uri">https://vincentarelbundock.github.io/Rdatasets/datasets.html</a>. It contains 65 observations of 12 variables, which are brand, manufacturer represented by its first initial (G=General Mills, K=Kelloggs, N=Nabisco, P=Post, Q=Quaker Oats, R=Ralston Purina), calories, fat (g), protein (g), sodium (mg), fiber (g), carbohydrates (g), sugars (g), potassium (g), all in one portion, vitamins (none, enriched, or 100%), and shelf (1, 2, or 3, counting from the floor up).</p>
+<ol style="list-style-type: decimal">
+<li>MANOVA Testing</li>
+</ol>
+<pre class="r"><code>manova1 &lt;- manova(cbind(calories, fat, sugars) ~ mfr, data = UScereal)
+summary(manova1)</code></pre>
+<pre><code>##           Df  Pillai approx F num Df den Df Pr(&gt;F)
+## mfr        5 0.33188   1.4677     15    177 0.1216
+## Residuals 59</code></pre>
+<pre class="r"><code>1 - (0.95^4)  #Probability of at least one type I error</code></pre>
+<pre><code>## [1] 0.1854938</code></pre>
+<pre class="r"><code>0.05/4  #Bonferroni correction</code></pre>
+<pre><code>## [1] 0.0125</code></pre>
+<p>A one-way multivariate analysis of variance (MANOVA) was conducted to test the effect of manufacturer on three dependent, numeric variables: the calories, fat, and sugar in one portion. Significant differences were not found across levels of manufacturer for the numeric variables, as the p-value &gt; 0.05. Because there are no mean differences, univariate ANOVAs and post-hoc t tests are not required. I have only performed one test. The probability of a type I error is 18.55%, and the value of bonferroni correction is 0.0125. The assumptions of a MANOVA test are multivariate normality of dependent variables, independent sample and random observations, homogeneity of covariance matrices, linear relationships between dependent variables, no extreme univariate or multivariate outliers, and no multicollinearity. These assumptions have to be met for a successful MANOVA, which we were able to perform.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Randomization Test</li>
+</ol>
+<pre class="r"><code>UScereal &lt;- UScereal %&gt;% mutate(y = ifelse(vitamins == &quot;none&quot;, 
+    1, 0))
+t.test(data = UScereal, fibre ~ y)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  fibre by y
+## t = 0.20747, df = 2.8582, p-value = 0.8495
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -6.015531  6.829619
+## sample estimates:
+## mean in group 0 mean in group 1 
+##        3.889631        3.482587</code></pre>
+<pre class="r"><code>t.test(data = UScereal, potassium ~ y)</code></pre>
+<pre><code>## 
+##  Welch Two Sample t-test
+## 
+## data:  potassium by y
+## t = 0.40164, df = 2.6411, p-value = 0.7182
+## alternative hypothesis: true difference in means is not equal to 0
+## 95 percent confidence interval:
+##  -196.5313  248.4611
+## sample estimates:
+## mean in group 0 mean in group 1 
+##        160.3181        134.3532</code></pre>
+<pre class="r"><code>t &lt;- vector()
+for (i in 1:10000) {
+    samp &lt;- rnorm(25, mean = 5)
+    t[i] &lt;- (mean(samp) - 5)/(sd(samp)/sqrt(25))
+}
+data.frame(t) %&gt;% ggplot(aes(t)) + geom_histogram(aes(y = ..density..), 
+    bins = 30) + stat_function(fun = dt, args = list(df = 24), 
+    geom = &quot;line&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /> Because the vitamins variable was divided into the factors none, enriched, and 100%, I decided to make a new binary variable “y” by making “none” = 1, and “enriched” and “100%” = 0. I performed a Welch two sample t-test to see whether the average cereal fibre and potassium had significant mean differences when the cereal was enriched vs. when it was not. The null hypothesis is that there is no significant difference in the means between fibre and potassium when the cereal is enriched with vitamins vs. when it is not. The alternate hypothesis is that there is a significant difference in the means between fibre and potassium when the cereal is enriched vs. when it is not. The first t-test explored the interaction of fibre with vitamin enrichment and had a p-value of 0.8495. Therefore, we reject the null hypothesis and there was no significant difference in fibre of the cereal with vitamin enrichment. The second t-test explored the interaction of potassium in one serving of the cereal with vitamin enrichment and had a p-value of 0.7182, meaning we reject the null hypothesis and that were was no significant mean difference between the interaction of potassium in the cereal with vitamin enrichment. A plot visualizing the null distribution and the test statistic can be seen above.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Linear Regression Model</li>
+</ol>
+<pre class="r"><code>UScereal$carbo_c &lt;- UScereal$carbo - mean(UScereal$carbo)
+UScereal$sugars_c &lt;- UScereal$sugars - mean(UScereal$sugars)
+fit3 &lt;- lm(carbo_c ~ sugars_c * y, data = UScereal)
+summary(fit3)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = carbo_c ~ sugars_c * y, data = UScereal)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -10.736  -4.810  -1.096   2.594  48.223 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) -0.179749   1.091643  -0.165    0.870
+## sugars_c    -0.005362   0.198447  -0.027    0.979
+## y            3.894554   5.476366   0.711    0.480
+## sugars_c:y         NA         NA      NA       NA
+## 
+## Residual standard error: 8.562 on 62 degrees of freedom
+## Multiple R-squared:  0.009744,   Adjusted R-squared:  -0.0222 
+## F-statistic: 0.305 on 2 and 62 DF,  p-value: 0.7382</code></pre>
+<pre class="r"><code># Regression plot
+ggplot(UScereal, aes(x = sugars, y = carbo, group = y)) + geom_point(aes(color = y)) + 
+    geom_smooth(method = &quot;lm&quot;, formula = y ~ 1, se = F, fullrange = T, 
+        aes(color = y)) + xlab(&quot;Sugars per serving (g)&quot;) + ylab(&quot;Carbohydrates per serving (g)&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Assumptions (linearity, homoskedsaticity)
+resids &lt;- fit3$residuals
+fitvals &lt;- fit3$fitted.values
+ggplot() + geom_point(aes(fitvals, resids)) + geom_hline(yintercept = 0, 
+    color = &quot;orange&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(lmtest)
+bptest(fit3)  #Breuch-Pagan test (null hypothesis: homoskedasticity)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit3
+## BP = 0.21375, df = 2, p-value = 0.8986</code></pre>
+<pre class="r"><code># The p-value &gt; 0.05, so the null hypothesis can&#39;t be
+# rejected and we confirm that heteroskedasticity is not the
+# case in the model. It is homoskedastic. Assumptions
+# (normality)
+ggplot() + geom_histogram(aes(resids), bins = 20)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># Based off the histogram of residuals, normality is not met.
+# The data is left-skewed. Robust standard errors
+summary(fit3)$coef[, 1:2]  #uncorrected SEs</code></pre>
+<pre><code>##                 Estimate Std. Error
+## (Intercept) -0.179748649  1.0916432
+## sugars_c    -0.005362241  0.1984466
+## y            3.894554070  5.4763662</code></pre>
+<pre class="r"><code>library(sandwich)
+coeftest(fit3, vcov = vcovHC(fit3))[, 1:2]  #corrected SEs</code></pre>
+<pre><code>##                 Estimate Std. Error
+## (Intercept) -0.179748649  1.0686592
+## sugars_c    -0.005362241  0.1189896
+## y            3.894554070  6.7221538</code></pre>
+<pre class="r"><code># The standard errors are lower in the corrected output, but
+# the intercept and coefficient estimates remain the same.
+# Variation
+summary(fit3)$r.sq</code></pre>
+<pre><code>## [1] 0.009744432</code></pre>
+<pre class="r"><code># The proportion of the variation in the outcome explained by
+# the model is 0.97%.
+fit3rerun &lt;- lm(carbo ~ y + sugars, data = UScereal)  #Regression without interactions
+lrtest(fit3rerun, fit3)  #Likelihood ratio test</code></pre>
+<pre><code>## Likelihood ratio test
+## 
+## Model 1: carbo ~ y + sugars
+## Model 2: carbo_c ~ sugars_c * y
+##   #Df  LogLik Df Chisq Pr(&gt;Chisq)
+## 1   4 -230.27                    
+## 2   4 -230.27  0     0          1</code></pre>
+<p>The intercept explains the carbohydrate value when the value of sugars and y is 0. sugars_c explains that if you hold y constant, every 1 point increase in sugars would decrease the carbohydrates by 0.005362. y explains that if you hold sugars constant, the absence of vitamins will increase the carbohydrates by 3.894554 compared to enriched cereal. The interaction explains whether the effect of presence of sugars on carbohydrates differs by vitamin enrichment. Out of the linearity, heteroskedsaticity, and normality assumptions, not all are met. Looking at the graph, we can see that the linearity assumption is met due to linear relationship between predictor and response variables. Heteroskedasticity is not met because the points do not fan out. We can confirm this with the Breusch-Pagan test where we see that the p-value &gt; 0.05. Based off of the histogram of residuals, normality is not met. When the regression was recomputed with robust standard errors via coeftest, the standard errors were slightly lower than in the uncorrected output run previously. 0.97% of the variation in the outcome is explained by the model.</p>
+<ol start="4" style="list-style-type: decimal">
+<li>Linear Regression Model with Bootstrapped Standard Errors</li>
+</ol>
+<pre class="r"><code>fit3 &lt;- lm(carbo_c ~ sugars_c * y, data = UScereal)
+samp_distn &lt;- replicate(5000, {
+    boot_dat &lt;- UScereal[sample(nrow(UScereal), replace = TRUE), 
+        ]
+    fit4 &lt;- lm(carbo_c ~ sugars_c * y, data = boot_dat)
+    coef(fit4)
+})
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept)  sugars_c  y sugars_c:y
+## 1    1.046376 0.1165703 NA         NA</code></pre>
+<p>The bootstrapped standard errors for the intercept and sugars are 0.001308052 and 0.0005891642, respectively. Vitamin enrichment and the interaction between the two are N/A. All of these bootstrapped errors are slightly less than the corrected robust standard errors and much less than the uncorrected standard errors.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Logistic Regression Predicting Binary Categorical Variable</li>
+</ol>
+<pre class="r"><code>class_diag &lt;- function(probs, truth) {
+    tab &lt;- table(factor(probs &gt; 0.5, levels = c(&quot;FALSE&quot;, &quot;TRUE&quot;)), 
+        truth)
+    acc = sum(diag(tab))/sum(tab)
+    sens = tab[2, 2]/colSums(tab)[2]
+    spec = tab[1, 1]/colSums(tab)[1]
+    ppv = tab[2, 2]/rowSums(tab)[2]
+    if (is.numeric(truth) == FALSE &amp; is.logical(truth) == FALSE) 
+        truth &lt;- as.numeric(truth) - 1
+    
+    ord &lt;- order(probs, decreasing = TRUE)
+    probs &lt;- probs[ord]
+    truth &lt;- truth[ord]
+    TPR = cumsum(truth)/max(1, sum(truth))
+    FPR = cumsum(!truth)/max(1, sum(!truth))
+    dup &lt;- c(probs[-1] &gt;= probs[-length(probs)], FALSE)
+    TPR &lt;- c(0, TPR[!dup], 1)
+    FPR &lt;- c(0, FPR[!dup], 1)
+    n &lt;- length(TPR)
+    auc &lt;- sum(((TPR[-1] + TPR[-n])/2) * (FPR[-1] - FPR[-n]))
+    data.frame(acc, sens, spec, ppv, auc)
+}
+# Regression and coefficient estimates
+logreg &lt;- glm(y ~ protein + sodium, data = UScereal, family = &quot;binomial&quot;)
+coeftest(logreg)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##              Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)   1.75017    3.19498  0.5478   0.5838
+## protein      -0.37059    0.81810 -0.4530   0.6506
+## sodium       -0.38223  132.20475 -0.0029   0.9977</code></pre>
+<pre class="r"><code>exp(coef(logreg))</code></pre>
+<pre><code>## (Intercept)     protein      sodium 
+##   5.7555927   0.6903258   0.6823412</code></pre>
+<pre class="r"><code># Regression and predicted probability
+logreg &lt;- glm(y ~ protein + sodium, data = UScereal, family = &quot;binomial&quot;)
+probs &lt;- predict(logreg, type = &quot;response&quot;)
+# Class diagnostics - accuracy, sensitivity, specificity, and
+# recall (ppv)
+class_diag(probs, UScereal$y)  #class diagnostics</code></pre>
+<pre><code>##         acc sens      spec ppv       auc
+## 1 0.9692308    1 0.9677419 0.6 0.9784946</code></pre>
+<pre class="r"><code># Confusion matrix
+table(predict = probs &gt; 0.5, truth = UScereal$y) %&gt;% addmargins()</code></pre>
+<pre><code>##        truth
+## predict  0  1 Sum
+##   FALSE 60  0  60
+##   TRUE   2  3   5
+##   Sum   62  3  65</code></pre>
+<pre class="r"><code># Density of log-odds (logit)
+UScereal$logit &lt;- predict(logreg)
+UScereal$y &lt;- factor(UScereal$y, levels = c(1, 0), labels = c(&quot;not vitamin enriched&quot;, 
+    &quot;vitamin enriched&quot;))
+ggplot(UScereal, aes(logit, fill = y)) + geom_density(alpha = 0.3) + 
+    geom_vline(xintercept = 0, lty = 2)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># ROCcurve
+library(plotROC)
+ROCcurve &lt;- ggplot(UScereal) + geom_roc(aes(d = y, m = probs), 
+    n.cuts = 0) + geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), 
+    lty = 2)
+ROCcurve</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCcurve)</code></pre>
+<pre><code>##   PANEL group        AUC
+## 1     1    -1 0.02150538</code></pre>
+<p>The coefficient estimates show the effect of the different variables on the odds for vitamin enrichment. For every one point increase in protein the odds of vitamin enrichment decrease by 0.37059. For every one point increase in sodium, the odds of vitamin enrichment decrease by 0.38223. The area under the curve of the ROC curve was calculated to be 0.0215, which indicates a poor model because the closer the AUC is to 1, the better.</p>
+</div>

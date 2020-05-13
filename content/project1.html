@@ -1,0 +1,350 @@
+---
+title: "Project 1"
+author: "Nandini Singh"
+date: "3/15/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<pre class="r"><code># Data sets Data set #1: Nutritional and Marketing
+# Information on US Cereals
+UScereal &lt;- read.csv(&quot;UScereal.csv&quot;)
+glimpse(UScereal)</code></pre>
+<pre><code>## Observations: 65
+## Variables: 12
+## $ brand     &lt;fct&gt; 100% Bran, All-Bran, All-Bran with Extra Fiber, Apple Cinna…
+## $ mfr       &lt;fct&gt; N, K, K, G, K, G, R, P, Q, G, G, G, G, R, K, K, G, K, K, G,…
+## $ calories  &lt;dbl&gt; 212.1212, 212.1212, 100.0000, 146.6667, 110.0000, 173.3333,…
+## $ protein   &lt;dbl&gt; 12.121212, 12.121212, 8.000000, 2.666667, 2.000000, 4.00000…
+## $ fat       &lt;dbl&gt; 3.030303, 3.030303, 0.000000, 2.666667, 0.000000, 2.666667,…
+## $ sodium    &lt;dbl&gt; 393.9394, 787.8788, 280.0000, 240.0000, 125.0000, 280.0000,…
+## $ fibre     &lt;dbl&gt; 30.303030, 27.272727, 28.000000, 2.000000, 1.000000, 2.6666…
+## $ carbo     &lt;dbl&gt; 15.15152, 21.21212, 16.00000, 14.00000, 11.00000, 24.00000,…
+## $ sugars    &lt;dbl&gt; 18.181818, 15.151515, 0.000000, 13.333333, 14.000000, 10.66…
+## $ shelf     &lt;int&gt; 3, 3, 3, 1, 2, 3, 1, 3, 2, 1, 2, 3, 2, 1, 1, 2, 2, 3, 3, 3,…
+## $ potassium &lt;dbl&gt; 848.48485, 969.69697, 660.00000, 93.33333, 30.00000, 133.33…
+## $ vitamins  &lt;fct&gt; enriched, enriched, enriched, enriched, enriched, enriched,…</code></pre>
+<pre class="r"><code># Data set #2: 2011 Advertising Spending for Cereal Brands
+adv_spending &lt;- read.csv(&quot;adv_spending.csv&quot;)
+glimpse(adv_spending)</code></pre>
+<pre><code>## Observations: 25
+## Variables: 2
+## $ brand    &lt;fct&gt; Honey Nut Cheerios, Frosted Mini-Wheats, Cheerios, Frosted F…
+## $ spending &lt;dbl&gt; 73.7, 53.9, 49.9, 40.6, 35.7, 29.0, 24.5, 19.0, 13.6, 12.6, …</code></pre>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>For this project, I obtained my first dataset from the website <a href="https://vincentarelbundock.github.io/Rdatasets/datasets.html" class="uri">https://vincentarelbundock.github.io/Rdatasets/datasets.html</a>. It contains 12 variables, including brand, manufacturer represented by its first initial: G=General Mills, K=Kelloggs, N=Nabisco, P=Post, Q=Quaker Oats, R=Ralston Purina, calories, fat (g), protein (g), sodium (mg), fiber (g), carbohydrates (g), sugar (g), potassium (g), all in one portion, vitamins (none, enriched, or 100%), and shelf (1, 2, or 3, counting from the floor). My second dataset came from <a href="http://www.cerealfacts.org/media/Marketing_Rankings/Advertising_Spending.pdf" class="uri">http://www.cerealfacts.org/media/Marketing_Rankings/Advertising_Spending.pdf</a>. I had to input the data on an excel sheet and save it as a csv file. It only has 2 variables: brand and advertising spending for 2011 in millions of dollars. I chose these datasets to analyze and compare because I am applying to graduate school for marketing, and I am interested in finding out if there is a correlation between the overall nutrition of a certain cereal and the amount spent on its advertising.</p>
+<pre class="r"><code># Tidying / Joining
+library(tidyverse)
+joined_data &lt;- full_join(UScereal, adv_spending)
+head(joined_data)</code></pre>
+<pre><code>##                       brand mfr calories   protein      fat   sodium     fibre
+## 1                 100% Bran   N 212.1212 12.121212 3.030303 393.9394 30.303030
+## 2                  All-Bran   K 212.1212 12.121212 3.030303 787.8788 27.272727
+## 3 All-Bran with Extra Fiber   K 100.0000  8.000000 0.000000 280.0000 28.000000
+## 4   Apple Cinnamon Cheerios   G 146.6667  2.666667 2.666667 240.0000  2.000000
+## 5               Apple Jacks   K 110.0000  2.000000 0.000000 125.0000  1.000000
+## 6                   Basic 4   G 173.3333  4.000000 2.666667 280.0000  2.666667
+##      carbo   sugars shelf potassium vitamins spending
+## 1 15.15152 18.18182     3 848.48485 enriched       NA
+## 2 21.21212 15.15151     3 969.69697 enriched       NA
+## 3 16.00000  0.00000     3 660.00000 enriched       NA
+## 4 14.00000 13.33333     1  93.33333 enriched     34.8
+## 5 11.00000 14.00000     2  30.00000 enriched      4.9
+## 6 24.00000 10.66667     3 133.33333 enriched       NA</code></pre>
+<pre class="r"><code>joined_wide &lt;- joined_data %&gt;% pivot_wider(names_from = &quot;mfr&quot;, 
+    values_from = &quot;calories&quot;) %&gt;% glimpse()</code></pre>
+<pre><code>## Observations: 70
+## Variables: 18
+## $ brand     &lt;chr&gt; &quot;100% Bran&quot;, &quot;All-Bran&quot;, &quot;All-Bran with Extra Fiber&quot;, &quot;Appl…
+## $ protein   &lt;dbl&gt; 12.121212, 12.121212, 8.000000, 2.666667, 2.000000, 4.00000…
+## $ fat       &lt;dbl&gt; 3.030303, 3.030303, 0.000000, 2.666667, 0.000000, 2.666667,…
+## $ sodium    &lt;dbl&gt; 393.9394, 787.8788, 280.0000, 240.0000, 125.0000, 280.0000,…
+## $ fibre     &lt;dbl&gt; 30.303030, 27.272727, 28.000000, 2.000000, 1.000000, 2.6666…
+## $ carbo     &lt;dbl&gt; 15.15152, 21.21212, 16.00000, 14.00000, 11.00000, 24.00000,…
+## $ sugars    &lt;dbl&gt; 18.181818, 15.151515, 0.000000, 13.333333, 14.000000, 10.66…
+## $ shelf     &lt;int&gt; 3, 3, 3, 1, 2, 3, 1, 3, 2, 1, 2, 3, 2, 1, 1, 2, 2, 3, 3, 3,…
+## $ potassium &lt;dbl&gt; 848.48485, 969.69697, 660.00000, 93.33333, 30.00000, 133.33…
+## $ vitamins  &lt;fct&gt; enriched, enriched, enriched, enriched, enriched, enriched,…
+## $ spending  &lt;dbl&gt; NA, NA, NA, 34.8, 4.9, NA, NA, NA, NA, 49.9, 29.0, NA, 7.1,…
+## $ N         &lt;dbl&gt; 212.1212, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, N…
+## $ K         &lt;dbl&gt; NA, 212.1212, 100.0000, NA, 110.0000, NA, NA, NA, NA, NA, N…
+## $ G         &lt;dbl&gt; NA, NA, NA, 146.6667, NA, 173.3333, NA, NA, NA, 88.0000, 16…
+## $ R         &lt;dbl&gt; NA, NA, NA, NA, NA, NA, 134.3284, NA, NA, NA, NA, NA, NA, 1…
+## $ P         &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, 134.3284, NA, NA, NA, NA, NA, N…
+## $ Q         &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, 160, NA, NA, NA, NA, NA, NA…
+## $ `NA`      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…</code></pre>
+<pre class="r"><code>joined_long &lt;- joined_wide %&gt;% pivot_longer(c(&quot;N&quot;, &quot;K&quot;, &quot;G&quot;, 
+    &quot;P&quot;, &quot;Q&quot;, &quot;R&quot;), names_to = &quot;mfr&quot;, values_to = &quot;calories&quot;, 
+    values_drop_na = T) %&gt;% glimpse()</code></pre>
+<pre><code>## Observations: 65
+## Variables: 14
+## $ brand     &lt;chr&gt; &quot;100% Bran&quot;, &quot;All-Bran&quot;, &quot;All-Bran with Extra Fiber&quot;, &quot;Appl…
+## $ protein   &lt;dbl&gt; 12.121212, 12.121212, 8.000000, 2.666667, 2.000000, 4.00000…
+## $ fat       &lt;dbl&gt; 3.030303, 3.030303, 0.000000, 2.666667, 0.000000, 2.666667,…
+## $ sodium    &lt;dbl&gt; 393.9394, 787.8788, 280.0000, 240.0000, 125.0000, 280.0000,…
+## $ fibre     &lt;dbl&gt; 30.303030, 27.272727, 28.000000, 2.000000, 1.000000, 2.6666…
+## $ carbo     &lt;dbl&gt; 15.15152, 21.21212, 16.00000, 14.00000, 11.00000, 24.00000,…
+## $ sugars    &lt;dbl&gt; 18.181818, 15.151515, 0.000000, 13.333333, 14.000000, 10.66…
+## $ shelf     &lt;int&gt; 3, 3, 3, 1, 2, 3, 1, 3, 2, 1, 2, 3, 2, 1, 1, 2, 2, 3, 3, 3,…
+## $ potassium &lt;dbl&gt; 848.48485, 969.69697, 660.00000, 93.33333, 30.00000, 133.33…
+## $ vitamins  &lt;fct&gt; enriched, enriched, enriched, enriched, enriched, enriched,…
+## $ spending  &lt;dbl&gt; NA, NA, NA, 34.8, 4.9, NA, NA, NA, NA, 49.9, 29.0, NA, 7.1,…
+## $ `NA`      &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ mfr       &lt;chr&gt; &quot;N&quot;, &quot;K&quot;, &quot;K&quot;, &quot;G&quot;, &quot;K&quot;, &quot;G&quot;, &quot;R&quot;, &quot;P&quot;, &quot;Q&quot;, &quot;G&quot;, &quot;G&quot;, &quot;G&quot;,…
+## $ calories  &lt;dbl&gt; 212.1212, 212.1212, 100.0000, 146.6667, 110.0000, 173.3333,…</code></pre>
+</div>
+<div id="tidying-joining" class="section level1">
+<h1>Tidying, Joining</h1>
+<p>My datasets were already tidy, so I pivoted wider by making manufacturer columns with their corresponding calories per portion and then proceeded to pivot longer to condense the these columns into one column called “mfr”, which made my data much easier to read. I included values_drop_na=T when I pivoted longer in order demonstrate that I can omit the NAs, but there were not any to begin with. I did a full join with the common variable “brand”, as I wanted to keep all the variables in both datasets.</p>
+<pre class="r"><code># Wrangling
+
+# selecting only to variables to display
+joined_data %&gt;% select(vitamins, sugars)</code></pre>
+<pre><code>##    vitamins    sugars
+## 1  enriched 18.181818
+## 2  enriched 15.151515
+## 3  enriched  0.000000
+## 4  enriched 13.333333
+## 5  enriched 14.000000
+## 6  enriched 10.666667
+## 7  enriched  8.955224
+## 8  enriched  7.462687
+## 9  enriched 16.000000
+## 10 enriched  0.800000
+## 11 enriched 12.000000
+## 12 enriched 14.000000
+## 13 enriched 13.000000
+## 14 enriched  3.000000
+## 15 enriched  2.000000
+## 16 enriched 12.000000
+## 17 enriched 13.000000
+## 18 enriched 14.000000
+## 19 enriched  3.000000
+## 20 enriched 13.333333
+## 21 enriched  6.666667
+## 22 enriched 13.000000
+## 23 enriched 14.666667
+## 24 enriched  8.750000
+## 25 enriched 14.925373
+## 26 enriched 17.910448
+## 27 enriched 16.000000
+## 28 enriched 17.045455
+## 29 enriched 12.000000
+## 30 enriched  5.681818
+## 31 enriched 12.000000
+## 32 enriched 12.121212
+## 33 enriched 11.000000
+## 34 enriched 13.333333
+## 35 enriched  8.270677
+## 36     100% 12.000000
+## 37 enriched  2.000000
+## 38 enriched  8.955224
+## 39 enriched 12.000000
+## 40 enriched 19.402985
+## 41 enriched  6.000000
+## 42 enriched 13.432836
+## 43 enriched 10.447761
+## 44 enriched 20.000000
+## 45 enriched 20.895522
+## 46     100%  3.000000
+## 47     none  0.000000
+## 48 enriched 12.000000
+## 49 enriched 16.000000
+## 50 enriched 16.000000
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 20 rows ]</code></pre>
+<pre class="r"><code># shows the mean calories for cereals in each shelf
+joined_data %&gt;% group_by(shelf) %&gt;% summarize(mean_cal = mean(calories))</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   shelf mean_cal
+##   &lt;int&gt;    &lt;dbl&gt;
+## 1     1     119.
+## 2     2     130.
+## 3     3     180.
+## 4    NA      NA</code></pre>
+<pre class="r"><code># returns cereals in descending advertising spending for
+# caloric values 300-400
+joined_data %&gt;% filter(between(calories, 300, 400)) %&gt;% arrange(desc(spending))</code></pre>
+<pre><code>##                brand mfr calories  protein      fat   sodium    fibre    carbo
+## 1 Great Grains Pecan   P 363.6364 9.090909 9.090909 227.2727 9.090909 39.39394
+##     sugars shelf potassium vitamins spending
+## 1 12.12121     3  303.0303 enriched       NA</code></pre>
+<pre class="r"><code># converted sodium per portion from milligrams to grams and
+# created a new variable
+joined_data %&gt;% mutate(sodium_g = (sodium * 1000))</code></pre>
+<pre><code>##                                    brand  mfr  calories    protein       fat
+## 1                              100% Bran    N 212.12121 12.1212121 3.0303030
+## 2                               All-Bran    K 212.12121 12.1212121 3.0303030
+## 3              All-Bran with Extra Fiber    K 100.00000  8.0000000 0.0000000
+## 4                Apple Cinnamon Cheerios    G 146.66667  2.6666667 2.6666667
+## 5                            Apple Jacks    K 110.00000  2.0000000 0.0000000
+## 6                                Basic 4    G 173.33333  4.0000000 2.6666667
+## 7                              Bran Chex    R 134.32836  2.9850746 1.4925373
+##       sodium     fibre    carbo    sugars shelf potassium vitamins spending
+## 1  393.93939 30.303030 15.15152 18.181818     3 848.48485 enriched       NA
+## 2  787.87879 27.272727 21.21212 15.151515     3 969.69697 enriched       NA
+## 3  280.00000 28.000000 16.00000  0.000000     3 660.00000 enriched       NA
+## 4  240.00000  2.000000 14.00000 13.333333     1  93.33333 enriched     34.8
+## 5  125.00000  1.000000 11.00000 14.000000     2  30.00000 enriched      4.9
+## 6  280.00000  2.666667 24.00000 10.666667     3 133.33333 enriched       NA
+## 7  298.50746  5.970149 22.38806  8.955224     1 186.56716 enriched       NA
+##     sodium_g
+## 1  393939.39
+## 2  787878.79
+## 3  280000.00
+## 4  240000.00
+## 5  125000.00
+## 6  280000.00
+## 7  298507.46
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 63 rows ]</code></pre>
+<pre class="r"><code># counting the number of unique values in each variable
+joined_data %&gt;% summarize_all(n_distinct)</code></pre>
+<pre><code>##   brand mfr calories protein fat sodium fibre carbo sugars shelf potassium
+## 1    70   7       29      21  15     42    24    41     34     4        51
+##   vitamins spending
+## 1        4       21</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of calories for Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_cal = mean(calories), 
+    sd_cal = sd(calories), var_cal = var(calories))</code></pre>
+<pre><code>##   mean_cal   sd_cal var_cal
+## 1  149.671 45.77379 2095.24</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of fat per portion for Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_fat = mean(fat), 
+    sd_fat = sd(fat), var_fat = var(fat))</code></pre>
+<pre><code>##   mean_fat   sd_fat  var_fat
+## 1 1.023476 1.574286 2.478376</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of sodium per portion for
+# Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_sod = mean(sodium), 
+    sd_sod = sd(sodium), var_sod = var(sodium))</code></pre>
+<pre><code>##   mean_sod   sd_sod  var_sod
+## 1 242.7893 162.3573 26359.88</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of fibre per portion for
+# Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_fib = mean(fibre), 
+    sd_fib = sd(fibre), var_fib = var(fibre))</code></pre>
+<pre><code>##   mean_fib   sd_fib  var_fib
+## 1 5.068602 7.874833 62.01299</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of carbohydrates per portion
+# for Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_carb = mean(carbo), 
+    sd_carb = sd(carbo), var_carb = var(carbo))</code></pre>
+<pre><code>##   mean_carb  sd_carb var_carb
+## 1  19.79582 5.620894 31.59445</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of sugars per portion for
+# Kelloggs when advertising spending is greater that $10
+# million for the cereal
+joined_data %&gt;% filter(mfr == &quot;K&quot;, &quot;spending&quot; &gt; 10) %&gt;% summarize(mean_sug = mean(sugars), 
+    sd_sug = sd(sugars), var_sug = var(sugars))</code></pre>
+<pre><code>##   mean_sug   sd_sug  var_sug
+## 1  10.7982 6.117495 37.42375</code></pre>
+<pre class="r"><code># shows the mean, sd, and var of potassium per portion for
+# Kelloggs
+joined_data %&gt;% filter(mfr == &quot;K&quot;) %&gt;% summarize(mean_pot = mean(potassium), 
+    sd_pot = sd(potassium), var_pot = var(potassium))</code></pre>
+<pre><code>##   mean_pot  sd_pot  var_pot
+## 1 184.9595 238.284 56779.29</code></pre>
+<pre class="r"><code># shows all summary statistics for protein per portion
+joined_data %&gt;% summarize(mean_prot = mean(protein), var_prot = var(protein), 
+    max_prot = max(protein), min_prot = min(protein), n_dist_prot = n_distinct(protein), 
+    cor_prot = cor(shelf, protein), median_prot = median(protein), 
+    mad_prot = mad(protein))</code></pre>
+<pre><code>##   mean_prot var_prot max_prot min_prot n_dist_prot cor_prot median_prot
+## 1        NA       NA       NA       NA          21       NA          NA
+##   mad_prot
+## 1       NA</code></pre>
+<pre class="r"><code>cor(joined_data$fat, joined_data$sugars)</code></pre>
+<pre><code>## [1] NA</code></pre>
+<pre class="r"><code>plot(joined_data$fat, joined_data$sugars)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /> I have quite a few numeric variables, so I only summarized a few of them while selecting for other variables. I computed all the dplyr functions as well as all the summary statistics. Additionally, I created a correlation matrix for sugar and fat per cereal portion, which appears to have no significant correlation, which I expected.</p>
+<pre class="r"><code># Visualization
+
+# Correlation heatmap
+library(ggplot2)
+joined_data %&gt;% select_if(is.numeric) %&gt;% cor %&gt;% as.data.frame %&gt;% 
+    rownames_to_column %&gt;% pivot_longer(-1) %&gt;% ggplot(aes(rowname, 
+    name, fill = value)) + geom_tile() + geom_text(aes(label = round(value, 
+    2))) + xlab(&quot;&quot;) + ylab(&quot;&quot;) + scale_fill_gradient2(low = &quot;red&quot;, 
+    high = &quot;blue&quot;) + ggtitle(&quot;Correlation Heatmap of Numeric Variables&quot;)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot(data = joined_data, aes(x = mfr, y = calories, color = fat)) + 
+    geom_point(size = 3)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># this graph shows that as fat content gets higher, so does
+# the amount of calories per portion
+
+ggplot(joined_data, aes(x = protein, y = &quot;fibre&quot;, fill = spending)) + 
+    theme(legend.position = c(0.9, 0.7)) + geom_density(alpha = 0.75) + 
+    geom_bar(stat = &quot;summary&quot;, fun.y = &quot;mean&quot;) + geom_errorbar(stat = &quot;summary&quot;, 
+    width = 0.5)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># this plot shows absolutely no relation between protein and
+# advertising spending, which I did not expect because I feel
+# like cereal companies would want to advertise the higher
+# protein levels per serving in their product
+
+ggplot(joined_data, aes(x = shelf, fill = spending)) + geom_bar()</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-4-4.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code># this shows that companies are spending a lot more to have
+# their cereals displayed higher up form the ground</code></pre>
+<pre class="r"><code># Clustering
+
+install.packages(&quot;cluster&quot;)
+library(cluster)
+library(tidyverse)
+joined_data &lt;- na.omit(joined_data)
+
+pam_data &lt;- joined_data %&gt;% select(-spending, -vitamins, -shelf, 
+    -mfr, -brand) %&gt;% pam(3)
+
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- joined_data %&gt;% select(-spending, -vitamins, -shelf, 
+        -mfr, -brand) %&gt;% pam(i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>clust &lt;- joined_data %&gt;% mutate(cluster = as.factor(pam_fit$clustering))
+cmatrix &lt;- clust %&gt;% group_by(spending, vitamins, shelf, mfr, 
+    brand) %&gt;% count(cluster) %&gt;% arrange(desc(n)) %&gt;% pivot_wider(names_from = &quot;cluster&quot;, 
+    values_from = &quot;n&quot;, values_fill = list(n = 0))
+cmatrix</code></pre>
+<pre><code>## # A tibble: 20 x 15
+## # Groups:   spending, vitamins, shelf, mfr, brand [325]
+##    spending vitamins shelf mfr   brand   `2`   `5`   `9`  `10`   `6`   `3`   `4`
+##       &lt;dbl&gt; &lt;fct&gt;    &lt;int&gt; &lt;fct&gt; &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+##  1      0   enriched     1 P     Hone…     1     0     0     0     0     0     0
+##  2      0.1 enriched     2 G     Kix       0     1     0     0     0     0     0
+##  3      0.1 enriched     2 Q     Life      0     0     1     0     0     0     0
+##  4      0.5 none         3 Q     Puff…     0     0     0     1     0     0     0
+##  5      2.7 enriched     2 K     Corn…     1     0     0     0     0     0     0
+##  6      4.9 enriched     2 K     Appl…     1     0     0     0     0     0     0
+##  7      7.1 enriched     2 G     Coco…     0     1     0     0     0     0     0
+##  8      7.9 enriched     2 G     Trix      1     0     0     0     0     0     0
+##  9     12.6 enriched     2 G     Luck…     0     1     0     0     0     0     0
+## 10     13.6 enriched     2 P     Frui…     0     1     0     0     0     0     0
+## 11     19   enriched     1 R     Corn…     0     0     0     0     1     0     0
+## 12     24.5 enriched     1 K     Rice…     0     0     0     0     1     0     0
+## 13     24.5 enriched     1 K     Spec…     0     0     0     0     0     1     0
+## 14     29   enriched     2 G     Cinn…     0     0     0     0     0     0     1
+## 15     34.8 enriched     1 G     Appl…     0     0     0     0     0     0     0
+## 16     35.7 enriched     2 K     Froo…     1     0     0     0     0     0     0
+## 17     40.6 enriched     1 K     Fros…     0     0     0     0     0     0     1
+## 18     49.9 enriched     1 G     Chee…     0     0     0     0     0     1     0
+## 19     53.9 enriched     2 K     Fros…     0     0     0     0     0     0     0
+## 20     73.7 enriched     1 G     Hone…     0     0     0     0     0     0     0
+## # … with 3 more variables: `1` &lt;int&gt;, `7` &lt;int&gt;, `8` &lt;int&gt;</code></pre>
+<pre class="r"><code>ggplot(clust, aes(x = fat, y = calories, color = cluster)) + 
+    ggtitle(&quot;Fat vs. Calories&quot;) + geom_point()</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(pam_fit, which = 2)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(GGally)
+ggpairs(clust, columns = 5:12, aes(color = cluster))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-4.png" width="672" style="display: block; margin: auto;" /> My average silhouette width was about 0.35 according to my silhouette plot, making it weak and ppossibly artificial. There is a direct correlation between fat and calories, which makes sense. Also, there was not much correlation between the categorical variables (spending, manufacturer, vitamins). Lastly, I can assume that brands with the most sugary cereals would spend more on advertising than those with less sugary cereals, which I would have predicted assuming sugary cereals are more popular among children.</p>
+</div>
